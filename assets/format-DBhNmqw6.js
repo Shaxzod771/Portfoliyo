@@ -1,0 +1,1 @@
+function c(t,r=!0){if(!t)return"";const[i,$=""]=t.split(" "),[e,n,s]=i.split("-");return r?`${s}.${n}.${e} ${$.slice(0,5)}`:`${s}.${n}.${e}`}const o={uz:"O‘zbekcha",en:"English",ru:"Русский"};export{o as L,c as f};
