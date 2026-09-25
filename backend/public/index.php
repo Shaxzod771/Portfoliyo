@@ -27,6 +27,9 @@ if ($origin !== '' && in_array($origin, (array) Config::get('cors_origins', []),
 Response::addSharedHeaders([
     'X-Content-Type-Options' => 'nosniff',
     'Referrer-Policy'        => 'no-referrer',
+    // API answers (tokens, messages) must never be cached by the browser or a proxy
+    'Cache-Control'          => 'no-store',
+    'X-Frame-Options'        => 'DENY',
 ]);
 
 $request = new Request();

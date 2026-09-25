@@ -2,12 +2,14 @@ import { createRouter, createWebHashHistory } from "vue-router";
 import { useAuthStore } from "./stores/auth";
 import AdminLayout from "./components/AdminLayout.vue";
 import LoginView from "./views/LoginView.vue";
+import SetupView from "./views/SetupView.vue";
 
 // Hash history: admin.html is a static file, so /admin.html#/projects works on any host without rewrites
 const router = createRouter({
   history: createWebHashHistory(),
   routes: [
     { path: "/login", name: "login", component: LoginView, meta: { title: "Kirish", guest: true } },
+    { path: "/setup", name: "setup", component: SetupView, meta: { title: "Birinchi sozlash", guest: true } },
     {
       path: "/",
       component: AdminLayout,
@@ -29,7 +31,7 @@ router.beforeEach((to) => {
   if (!to.meta.guest && !auth.isLoggedIn) {
     return { name: "login", query: to.fullPath !== "/" ? { redirect: to.fullPath } : {} };
   }
-  if (to.name === "login" && auth.isLoggedIn) {
+  if (to.meta.guest && auth.isLoggedIn) {
     return { name: "dashboard" };
   }
 });

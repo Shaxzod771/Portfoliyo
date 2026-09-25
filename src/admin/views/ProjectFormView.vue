@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, computed, onMounted, onBeforeUnmount } from "vue";
+import { ref, reactive, computed, watch, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import { adminApi } from "../api";
 import { projectFormData } from "../projectForm";
@@ -22,6 +22,7 @@ const form = reactive({
   github_url: "", live_url: "",
   layout: "regular",
   image_fit: "cover",
+  preview_mode: "image",
   is_published: true,
 });
 const activeLang = ref("uz");
@@ -35,6 +36,11 @@ const saving = ref(false);
 const error = ref("");
 const errors = ref({});
 const saved = ref(false);
+
+// A live preview needs a link; drop back to the image when the link is cleared
+watch(() => form.live_url, (url) => {
+  if (!url.trim() && form.preview_mode === "live") form.preview_mode = "image";
+});
 
 const shownImage = computed(() => previewUrl.value || (removeImage.value ? null : currentImage.value));
 
@@ -51,6 +57,7 @@ onMounted(async () => {
       live_url: data.live_url || "",
       layout: data.layout,
       image_fit: data.image_fit,
+      preview_mode: data.preview_mode,
       is_published: data.is_published,
     });
     currentImage.value = data.image_url;
@@ -198,6 +205,26 @@ async function submit() {
       </div>
 
       <aside class="side-col">
+        <!-- What the card shows -->
+        <section class="card stack">
+          <fieldset class="field">
+            <legend class="field-label">Kartochkada nima ko‘rinsin</legend>
+            <label class="radio"><input v-model="form.preview_mode" type="radio" value="image" /> Rasm</label>
+            <label class="radio">
+              <input v-model="form.preview_mode" type="radio" value="live" :disabled="!form.live_url" />
+              <span>Jonli sayt <span class="hint">— demo havoladagi sahifa kartaning ichida ochilib turadi</span></span>
+            </label>
+            <span v-if="!form.live_url" class="hint">Jonli ko‘rinish uchun avval demo havolasini kiriting.</span>
+            <span v-if="errors.preview_mode" class="field-error">{{ errors.preview_mode }}</span>
+          </fieldset>
+          <iframe v-if="form.preview_mode === 'live' && form.live_url && !errors.live_url" :src="form.live_url"
+            class="live-check" title="Jonli ko‘rinish" sandbox="allow-scripts allow-same-origin" loading="lazy"></iframe>
+          <p v-if="form.preview_mode === 'live'" class="hint">
+            Yuqorida sayt ko‘rinmasa, u boshqa saytlarga joylashtirishni taqiqlagan — unda «Rasm»ni tanlang.
+            Rasm sayt yuklanguncha ko‘rsatiladi.
+          </p>
+        </section>
+
         <!-- Image -->
         <section class="card stack">
           <span class="field-label">Rasm</span>
@@ -291,6 +318,7 @@ async function submit() {
 .preview.contain img { object-fit: contain; padding: 12px; }
 
 .row-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.live-check { width: 100%; aspect-ratio: 16 / 10; border: 1px solid var(--border); border-radius: 10px; background: #fff; }
 .file-btn { position: relative; }
 .file-btn:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
 

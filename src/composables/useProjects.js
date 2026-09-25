@@ -15,6 +15,7 @@ function fromApi(p) {
     github: p.github_url,
     live: p.live_url,
     type: p.layout,
+    preview: p.preview_mode,
     // Texts come with the project instead of from translations.js
     title: p.title,
     desc: p.description,

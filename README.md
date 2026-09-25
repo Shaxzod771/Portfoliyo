@@ -34,6 +34,7 @@ Jonli sayt: https://shaxzod771.github.io/Portfoliyo/
 
 2. **Bazani yarating.** phpMyAdmin → **Import** → `backend/database/schema.sql` → **Import**.
    `partfoliyo` bazasi, jadvallar va hozirgi 5 ta loyiha yaratiladi. Faylni qayta import qilish xavfsiz.
+   Agar `schema.sql` ni avvalroq (2FA'dan oldin) import qilgan bo'lsangiz, `backend/database/upgrade-2026-09-auth.sql` ni ham import qiling.
 
 3. **Sozlamalar.** `backend/config.example.php` dan `backend/config.php` nusxasini oling va to'ldiring:
    - `db` — phpMyAdmin'ga qaysi server/login bilan kirsangiz, o'sha. OSPanel 6 da host = modul nomi (`MySQL-8.0`).
@@ -41,15 +42,30 @@ Jonli sayt: https://shaxzod771.github.io/Portfoliyo/
      https://myaccount.google.com/apppasswords → yangi parol yarating va shu yerga yozing.
      Bo'sh qolsa, xabarlar faqat bazaga yoziladi.
 
-4. **Admin yarating** (OSPanel terminalida yoki `cmd` da):
+4. Tekshirish: http://api.partfoliyo.local/api/health → `{"status":"ok","db":true}`
+
+5. **Admin akkaunti.** Admin panelni birinchi marta ochganingizda **"Birinchi sozlash"** sahifasi chiqadi:
+   login va parol o'ylab topasiz — shu akkaunt admin bo'ladi. Sahifa faqat bir marta, admin yo'q paytda ishlaydi
+   va faqat shu kompyuterdan (localhost) ochiladi. Boshqa joydan sozlash kerak bo'lsa, `config.php` → `setup_key`
+   ga uzun tasodifiy qator yozing va sahifada kiriting.
+
+   Parolni unutsangiz yoki telefon (2FA) yo'qolsa — terminalda:
 
    ```bat
-   D:\OSPanel\modules\PHP-8.3\PHP\php.exe backend\bin\create-admin.php shaxzod
+   D:\OSPanel\modules\PHP-8.3\PHP\php.exe backend\bin\create-admin.php shaxzod               :: yangi parol
+   D:\OSPanel\modules\PHP-8.3\PHP\php.exe backend\bin\create-admin.php shaxzod --disable-2fa :: 2FA ni o'chirish
    ```
 
-   Parolni so'raydi. Shu buyruq mavjud admin parolini tiklash uchun ham ishlaydi.
+### Kirish xavfsizligi
 
-5. Tekshirish: http://api.partfoliyo.local/api/health → `{"status":"ok","db":true}`
+- Parol: kamida 10 belgi, harf + raqam, loginni o'z ichiga olmaydi, keng tarqalgan parollar rad etiladi
+- Har 5 ta noto'g'ri urinishdan keyin login bloklanadi, har safar uzoqroq: 15 daqiqa → 1 soat → 6 soat → 24 soat.
+  Bitta IP'dan 15 daqiqada 20 tadan ortiq urinish ham bloklanadi. Kirish sahifasida qolgan urinishlar ko'rinadi
+- Mavjud bo'lmagan login ham xuddi shunday javob oladi — qaysi login borligini bilib bo'lmaydi
+- Ixtiyoriy **2FA** (Google Authenticator / Authy): Profil → "2FA ni yoqish"
+- Sessiya: oddiy kirish 12 soat va 2 soat faolsizlikdan keyin yopiladi; "Meni eslab qol" — 30 kun
+- Profil sahifasida faol sessiyalar (boshqa qurilmani chiqarib yuborish mumkin) va xavfsizlik tarixi
+- Parol o'zgarganda boshqa barcha sessiyalar yopiladi; tokenlar bazada faqat SHA-256 hash ko'rinishida saqlanadi
 
 ## 2. Frontend
 
@@ -67,9 +83,10 @@ npm run dev
 ### Admin panelda
 
 - **Dashboard** — loyihalar va xabarlar statistikasi, oxirgi xabarlar
-- **Loyihalar** — qo'shish, tahrirlash (3 tilda), rasm yuklash, tartibini o'zgartirish, yashirish, o'chirish
+- **Loyihalar** — qo'shish, tahrirlash (3 tilda), rasm yuklash, tartibini o'zgartirish, yashirish, o'chirish.
+  Kartochkada **rasm** yoki **jonli sayt** (demo havola kartaning ichida ochilib turadi) ko'rsatishni tanlash mumkin
 - **Xabarlar** — kontakt formasidan kelganlar: qidiruv, filtr, o'qilgan/o'qilmagan, javob yozish, o'chirish
-- **Profil** — parolni o'zgartirish
+- **Profil** — parol, 2FA, faol sessiyalar, xavfsizlik tarixi
 
 ## Kontakt formasi → email
 

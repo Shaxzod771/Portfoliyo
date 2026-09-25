@@ -113,6 +113,7 @@ onMounted(load);
               {{ project.is_published ? "Saytda" : "Yashirilgan" }}
             </span>
             <span class="badge">{{ LAYOUT_LABELS[project.layout] }}</span>
+            <span v-if="project.preview_mode === 'live'" class="badge badge-accent"><i class="bi bi-broadcast" aria-hidden="true"></i> Jonli</span>
             <a v-if="project.github_url" :href="project.github_url" target="_blank" rel="noopener" class="hint link">
               <i class="bi bi-github" aria-hidden="true"></i> GitHub
             </a>

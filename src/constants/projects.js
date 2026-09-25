@@ -7,6 +7,7 @@ import adminImg from "@/assets/project/admin.webp";
 // `key` links a project to its title/description in translations.js (projects.items).
 // Leave `github` or `live` as null when there is no link — the button is then hidden.
 // `fit: "contain"` shows logo-style images whole instead of cropping them.
+// `preview: "live"` shows the running site (the `live` link) in the card instead of the image.
 export const PROJECTS = [
   {
     key: "education",
@@ -28,6 +29,7 @@ export const PROJECTS = [
     fit: "contain",
     github: "https://github.com/Shaxzod-hp/Iso-Uz",
     live: "https://shaxzod-hp.github.io/Iso-Uz/#/access",
+    preview: "live",
     type: "regular",
   },
   {

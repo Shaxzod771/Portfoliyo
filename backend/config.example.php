@@ -28,8 +28,17 @@ return [
         'https://shaxzod771.github.io',
     ],
 
-    // How long an admin stays logged in
-    'token_ttl_days' => 7,
+    // Admin sessions
+    'session' => [
+        'hours'         => 12,   // normal login
+        'remember_days' => 30,   // "Meni eslab qol" ticked
+        'idle_minutes'  => 120,  // a normal login ends after this long without activity
+    ],
+
+    // First-run setup: while no admin exists, the admin panel shows a "create admin" page.
+    // It works without a key only on this computer (localhost). To set up from elsewhere,
+    // put a long random string here and enter it on that page. Leave empty otherwise.
+    'setup_key' => '',
 
     // Max size of an uploaded project image
     'upload_max_mb' => 3,

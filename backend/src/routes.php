@@ -18,10 +18,20 @@ return static function (Router $r): void {
     $r->post('/api/messages', MessageController::store(...));
 
     // ─── Auth ───
+    $r->get('/api/auth/setup', AuthController::setupStatus(...));
+    $r->post('/api/auth/setup', AuthController::setup(...));
     $r->post('/api/auth/login', AuthController::login(...));
+    $r->post('/api/auth/2fa/verify', AuthController::verifyTwoFactor(...));
     $r->post('/api/auth/logout', AuthController::logout(...), $auth);
     $r->get('/api/auth/me', AuthController::me(...), $auth);
     $r->put('/api/auth/password', AuthController::changePassword(...), $auth);
+    $r->get('/api/auth/sessions', AuthController::sessions(...), $auth);
+    $r->delete('/api/auth/sessions', AuthController::revokeOtherSessions(...), $auth);
+    $r->delete('/api/auth/sessions/{id}', AuthController::revokeSession(...), $auth);
+    $r->get('/api/auth/logs', AuthController::logs(...), $auth);
+    $r->post('/api/auth/2fa/setup', AuthController::twoFactorSetup(...), $auth);
+    $r->post('/api/auth/2fa/enable', AuthController::twoFactorEnable(...), $auth);
+    $r->post('/api/auth/2fa/disable', AuthController::twoFactorDisable(...), $auth);
 
     // ─── Admin panel ───
     $r->get('/api/admin/stats', StatsController::dashboard(...), $auth);

@@ -157,3 +157,28 @@ textarea.input { resize: vertical; min-height: 90px; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }
+
+/* ─── Login / setup pages ─── */
+.auth-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: radial-gradient(circle at 70% 10%, var(--accent-dim), transparent 50%), var(--bg);
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 32px;
+}
+
+.auth-card .brand { font-weight: 800; font-size: 0.95rem; }
+.auth-card .accent { color: var(--accent); }
+
+@media (max-width: 480px) {
+  .auth-card { padding: 24px 18px; }
+}

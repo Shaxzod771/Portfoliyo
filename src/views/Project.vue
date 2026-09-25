@@ -5,6 +5,7 @@ import { translations } from "../constants/translations";
 import { GITHUB_PROFILE } from "../constants/site";
 import { useReveal } from "../composables/useReveal";
 import { useProjects } from "../composables/useProjects";
+import LivePreview from "../components/LivePreview.vue";
 
 const settings = useSettingsStore();
 const t = computed(() => translations[settings.lang]?.projects || { items: {} });
@@ -52,8 +53,13 @@ watch(projects, () => nextTick(refresh));
           :class="`card-${project.type}`"
           :style="{ transitionDelay: `${(index % 2) * 0.1}s` }"
         >
-          <!-- Image -->
-          <div class="project-img-wrapper">
+          <!-- Preview: the running site (live) or an image -->
+          <a v-if="project.preview === 'live' && project.live" :href="project.live" target="_blank" rel="noopener noreferrer"
+            class="project-img-wrapper" :aria-label="`${project.title} — ${t.btn_live}`">
+            <LivePreview :url="project.live" :title="project.title"
+              :fallback-image="project.fit === 'contain' ? null : project.image" />
+          </a>
+          <div v-else class="project-img-wrapper">
             <img v-if="project.image" :src="project.image" :alt="project.title" loading="lazy" decoding="async"
               :class="{ 'img-contain': project.fit === 'contain' }" />
             <div v-else class="img-placeholder" aria-hidden="true">{{ project.title.charAt(0) }}</div>
@@ -168,6 +174,7 @@ watch(projects, () => nextTick(refresh));
 
 /* ─── IMAGE ─── */
 .project-img-wrapper {
+  display: block;
   position: relative;
   width: 100%;
   aspect-ratio: 16 / 9;

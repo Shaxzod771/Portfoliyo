@@ -16,6 +16,7 @@ final class ProjectController
     private const LANGS = ['uz', 'en', 'ru'];
     private const LAYOUTS = ['featured', 'regular', 'wide'];
     private const FITS = ['cover', 'contain'];
+    private const PREVIEWS = ['image', 'live'];
 
     /** Public: published projects for the portfolio site */
     public static function publicIndex(Request $request): array
@@ -133,6 +134,12 @@ final class ProjectController
         $data['image_fit'] = $request->string('image_fit') ?: 'cover';
         $v->in('layout', $data['layout'], self::LAYOUTS)->in('image_fit', $data['image_fit'], self::FITS);
 
+        $data['preview_mode'] = $request->string('preview_mode') ?: 'image';
+        $v->in('preview_mode', $data['preview_mode'], self::PREVIEWS);
+        if ($data['preview_mode'] === 'live' && $data['live_url'] === null) {
+            $v->add('live_url', 'Jonli ko‘rinish uchun demo havolasi kerak');
+        }
+
         $data['is_published'] = $request->bool('is_published', true) ? 1 : 0;
 
         $v->validate();
@@ -162,6 +169,7 @@ final class ProjectController
             'github_url'   => $row['github_url'],
             'live_url'     => $row['live_url'],
             'layout'       => $row['layout'],
+            'preview_mode' => $row['preview_mode'],
             'sort_order'   => (int) $row['sort_order'],
             'is_published' => (bool) $row['is_published'],
             'created_at'   => $row['created_at'],
