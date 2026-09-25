@@ -90,7 +90,7 @@ onUnmounted(() => {
 
         <div class="hero-actions animate-up" style="--delay: 0.5s">
           <a href="#project" class="btn-primary-custom" v-magnetic="20">
-            {{ t.hero_btn }} <i class="bi bi-arrow-down-right ms-2"></i>
+            {{ t.hero_btn }} <i class="bi bi-arrow-down-right ms-2" aria-hidden="true"></i>
           </a>
           <div class="hero-socials">
             <a v-for="social in heroSocials" :key="social.name" :href="social.url" target="_blank"

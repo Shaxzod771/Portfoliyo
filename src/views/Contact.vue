@@ -3,7 +3,7 @@ import { ref, computed, onUnmounted } from "vue";
 import { useSettingsStore } from "../stores/settings";
 import { translations } from "../constants/translations";
 import { CONTACT, SOCIALS } from "../constants/site";
-import { sendContactMessage } from "../services/telegram";
+import { sendContactMessage } from "../services/contact";
 import { useReveal } from "../composables/useReveal";
 
 const settings = useSettingsStore();

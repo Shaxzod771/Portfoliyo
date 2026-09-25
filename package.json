@@ -1,12 +1,13 @@
 {
-  "name": "partfoliyo",
+  "name": "portfoliyo",
   "version": "1.0.0",
   "description": "Shaxzod Isomiddinov – Personal Portfolio",
   "dependencies": {
     "bootstrap": "^5.3.8",
     "bootstrap-icons": "^1.13.1",
     "pinia": "^3.0.4",
-    "vue": "^3.5.29"
+    "vue": "^3.5.29",
+    "vue-router": "^4.6.4"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.8",
@@ -20,13 +21,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Shaxzod-hp/Partfoliyo.git"
+    "url": "git+https://github.com/Shaxzod771/Portfoliyo.git"
   },
   "keywords": [],
   "author": "Shaxzod Isomiddinov",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/Shaxzod-hp/Partfoliyo/issues"
+    "url": "https://github.com/Shaxzod771/Portfoliyo/issues"
   },
-  "homepage": "https://github.com/Shaxzod-hp/Partfoliyo#readme"
+  "homepage": "https://github.com/Shaxzod771/Portfoliyo#readme"
 }

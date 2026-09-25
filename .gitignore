@@ -37,3 +37,8 @@ __screenshots__/
 
 # Vite
 *.timestamp-*-*.mjs
+
+# Backend
+backend/config.php
+backend/public/uploads/projects/*
+!backend/public/uploads/projects/.gitkeep

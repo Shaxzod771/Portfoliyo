@@ -1,0 +1,3 @@
+# Uploaded files are images only; never run them as scripts
+php_flag engine off
+Options -Indexes

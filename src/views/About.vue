@@ -2,7 +2,7 @@
 import { computed, ref } from "vue";
 import { useSettingsStore } from "../stores/settings";
 import { translations } from "../constants/translations";
-import { PROJECTS } from "../constants/projects";
+import { useProjects } from "../composables/useProjects";
 import { useReveal } from "../composables/useReveal";
 
 const settings = useSettingsStore();
@@ -10,10 +10,11 @@ const t = computed(() => translations[settings.lang]?.about || {});
 const baseUrl = import.meta.env.BASE_URL;
 const root = ref(null);
 useReveal(root, ".animate-up, .stat-line");
+const projects = useProjects();
 
 const stats = computed(() => [
   { label: t.value.stats_exp, value: '1+' },
-  { label: t.value.stats_proj, value: `${PROJECTS.length}+` },
+  { label: t.value.stats_proj, value: `${projects.value.length}+` },
   { label: t.value.stats_client, value: '100%' }
 ]);
 </script>

@@ -1,23 +1,28 @@
 <script setup>
-import { computed, ref } from "vue";
+import { computed, ref, watch, nextTick } from "vue";
 import { useSettingsStore } from "../stores/settings";
 import { translations } from "../constants/translations";
-import { PROJECTS } from "../constants/projects";
 import { GITHUB_PROFILE } from "../constants/site";
 import { useReveal } from "../composables/useReveal";
+import { useProjects } from "../composables/useProjects";
 
 const settings = useSettingsStore();
 const t = computed(() => translations[settings.lang]?.projects || { items: {} });
 const root = ref(null);
-useReveal(root, ".animate-up, .project-card");
+const { refresh } = useReveal(root, ".animate-up, .project-card");
+const projects = useProjects();
 
+// Projects from the API bring their own texts ({ uz, en, ru }); built-in ones use translations.js
 const translatedProjects = computed(() =>
-  PROJECTS.map((p) => ({
+  projects.value.map((p) => ({
     ...p,
-    title: t.value.items?.[p.key]?.title || p.key,
-    desc: t.value.items?.[p.key]?.desc || "",
+    title: p.title?.[settings.lang] || p.title?.uz || t.value.items?.[p.key]?.title || p.key,
+    desc: p.desc?.[settings.lang] ?? p.desc?.uz ?? t.value.items?.[p.key]?.desc ?? "",
   }))
 );
+
+// Cards rendered after the API answers need to be observed too, or they'd stay hidden
+watch(projects, () => nextTick(refresh));
 </script>
 
 <template>
@@ -49,8 +54,9 @@ const translatedProjects = computed(() =>
         >
           <!-- Image -->
           <div class="project-img-wrapper">
-            <img :src="project.image" :alt="project.title" loading="lazy" decoding="async"
+            <img v-if="project.image" :src="project.image" :alt="project.title" loading="lazy" decoding="async"
               :class="{ 'img-contain': project.fit === 'contain' }" />
+            <div v-else class="img-placeholder" aria-hidden="true">{{ project.title.charAt(0) }}</div>
             <div class="img-overlay"></div>
           </div>
 
@@ -195,6 +201,18 @@ const translatedProjects = computed(() =>
   object-position: center;
   background: #fff;
   padding: 24px;
+}
+
+/* Project saved without an image */
+.img-placeholder {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  font-size: clamp(3rem, 8vw, 6rem);
+  font-weight: 800;
+  color: var(--accent);
+  background: radial-gradient(circle at 30% 20%, var(--accent-dim), transparent 60%), var(--bg-secondary);
 }
 
 .img-overlay {

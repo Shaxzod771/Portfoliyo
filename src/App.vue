@@ -78,8 +78,7 @@ onUnmounted(() => {
 </template>
 
 <style>
-/* ─── GOOGLE FONT ─── */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+/* Inter font is loaded from index.html (preconnect + <link>) so it doesn't wait for this CSS */
 
 /* ─── DESIGN TOKENS (PREMIUM DARK) ─── */
 :root {

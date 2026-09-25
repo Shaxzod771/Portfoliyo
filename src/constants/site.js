@@ -1,6 +1,6 @@
 // Personal details shown across the site — change them here in one place.
 export const CONTACT = {
-  email: "isomiddinovshaxzod007@gmail.com",
+  email: "isomiddinovshaxzod771@gmail.com",
   phone: "+998940073989",
   phoneDisplay: "+998 94 007 39 89",
 };
