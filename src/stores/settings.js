@@ -1,26 +1,29 @@
 import { defineStore } from 'pinia';
 
+const SUPPORTED_LANGS = ['uz', 'en', 'ru'];
+
+function readStoredLang() {
+  try {
+    const lang = localStorage.getItem('lang');
+    return SUPPORTED_LANGS.includes(lang) ? lang : 'uz';
+  } catch {
+    return 'uz';
+  }
+}
+
 export const useSettingsStore = defineStore('settings', {
   state: () => ({
-    lang: localStorage.getItem('lang') || 'uz',
-    theme: localStorage.getItem('theme') || 'dark',
+    lang: readStoredLang(),
   }),
   actions: {
     setLanguage(lang) {
+      if (!SUPPORTED_LANGS.includes(lang)) return;
       this.lang = lang;
-      localStorage.setItem('lang', lang);
-    },
-    toggleTheme() {
-      this.theme = this.theme === 'dark' ? 'light' : 'dark';
-      localStorage.setItem('theme', this.theme);
-      this.applyTheme();
-    },
-    applyTheme() {
-      if (this.theme === 'light') {
-        document.documentElement.classList.add('light-mode');
-      } else {
-        document.documentElement.classList.remove('light-mode');
+      try {
+        localStorage.setItem('lang', lang);
+      } catch {
+        // Storage can be unavailable (private mode); the choice still applies for this visit
       }
-    }
+    },
   }
 });

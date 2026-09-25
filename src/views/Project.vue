@@ -1,97 +1,79 @@
 <script setup>
-import { computed, onMounted } from "vue";
+import { computed, ref } from "vue";
 import { useSettingsStore } from "../stores/settings";
 import { translations } from "../constants/translations";
+import { PROJECTS } from "../constants/projects";
+import { GITHUB_PROFILE } from "../constants/site";
+import { useReveal } from "../composables/useReveal";
 
 const settings = useSettingsStore();
-const t = computed(() => translations[settings.lang]?.projects || { items: [] });
-
-import educationImg from "@/assets/project/Education.png";
-import newsImg from "@/assets/project/news.avif";
-import adminImg from "@/assets/project/admin.png";
-import marketImg from "@/assets/project/Market.png";
-import crmImg from "@/assets/project/CRM.png";
-
-const projects = [
-  { image: educationImg, github: "https://github.com/RizaSoft-Group/riza-edu.git", live: "https://github.com/RizaSoft-Group/riza-edu.git", type: 'featured' },
-  { image: newsImg, github: "https://github.com/Shaxzod-hp/Shaxzod", live: "#", type: 'regular' },
-  { image: adminImg, github: "https://shaxzod-hp.github.io/Iso-Uz/#/access", live: "#", type: 'regular' },
-  { image: marketImg, github: "https://github.com/Shaxzod-hp/Shaxzod", live: "#", type: 'wide' },
-  { image: crmImg, github: "https://shaxzod-hp.github.io/Iso-Uz/#/access", live: "#", type: 'regular' },
-];
+const t = computed(() => translations[settings.lang]?.projects || { items: {} });
+const root = ref(null);
+useReveal(root, ".animate-up, .project-card");
 
 const translatedProjects = computed(() =>
-  projects.map((p, idx) => ({
+  PROJECTS.map((p) => ({
     ...p,
-    title: t.value.items?.[idx]?.title || "Project Title",
-    desc: t.value.items?.[idx]?.desc || "Project Description",
+    title: t.value.items?.[p.key]?.title || p.key,
+    desc: t.value.items?.[p.key]?.desc || "",
   }))
 );
-
-onMounted(() => {
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('in-view');
-      }
-    });
-  }, { threshold: 0.1 });
-  
-  document.querySelectorAll('.animate-up, .project-card').forEach(el => observer.observe(el));
-});
 </script>
 
 <template>
-  <div class="projects-section">
+  <div class="projects-section" ref="root">
     <div class="container">
       <!-- EDITORIAL HEADER -->
-      <div class="project-header animate-up">
+      <div class="project-header animate-up mb-5">
         <div class="row align-items-end">
           <div class="col-lg-8">
             <h2 class="editorial-title">
-              {{ t.title || 'SELECTED' }} <span class="text-accent">{{ t.subtitle || 'WORK' }}</span>
+              {{ t.title }} <span class="text-accent">{{ t.subtitle }}</span>
             </h2>
           </div>
           <div class="col-lg-4 text-lg-end mt-4 mt-lg-0">
-            <a href="https://github.com/Shaxzod-hp" target="_blank" class="view-all-link" v-magnetic="10">
-              {{ t.view_all || 'VIEW ALL WORK' }} <i class="bi bi-arrow-right"></i>
+            <a :href="GITHUB_PROFILE" target="_blank" rel="noopener noreferrer" class="view-all-link" v-magnetic="10">
+              {{ t.view_all }} <i class="bi bi-arrow-right" aria-hidden="true"></i>
             </a>
           </div>
         </div>
       </div>
       <!-- EDITORIAL PROJECT GRID -->
       <div class="editorial-grid">
-        <div 
-          v-for="(project, index) in translatedProjects" 
-          :key="index" 
+        <article
+          v-for="(project, index) in translatedProjects"
+          :key="project.key"
           class="project-card"
           :class="`card-${project.type}`"
-          :style="{ animationDelay: (index * 0.1) + 's' }"
+          :style="{ transitionDelay: `${(index % 2) * 0.1}s` }"
         >
           <!-- Image -->
           <div class="project-img-wrapper">
-            <img :src="project.image" :alt="project.title" loading="lazy" />
+            <img :src="project.image" :alt="project.title" loading="lazy" decoding="async"
+              :class="{ 'img-contain': project.fit === 'contain' }" />
             <div class="img-overlay"></div>
           </div>
 
           <!-- Content -->
           <div class="project-content">
             <div class="content-left">
-              <div class="project-number">0{{ index + 1 }}</div>
-              <h4 class="project-title">{{ project.title }}</h4>
+              <div class="project-number">{{ String(index + 1).padStart(2, '0') }}</div>
+              <h3 class="project-title">{{ project.title }}</h3>
               <p class="project-desc">{{ project.desc }}</p>
             </div>
-            
+
             <div class="project-actions">
-              <a :href="project.github" target="_blank" class="action-btn" aria-label="GitHub">
-                <i class="bi bi-github"></i>
+              <a v-if="project.github" :href="project.github" target="_blank" rel="noopener noreferrer"
+                class="action-btn" :aria-label="`${project.title} — ${t.btn_github}`" :title="t.btn_github">
+                <i class="bi bi-github" aria-hidden="true"></i>
               </a>
-              <a :href="project.live" target="_blank" class="action-btn" aria-label="Live Demo">
-                <i class="bi bi-arrow-up-right"></i>
+              <a v-if="project.live" :href="project.live" target="_blank" rel="noopener noreferrer"
+                class="action-btn" :aria-label="`${project.title} — ${t.btn_live}`" :title="t.btn_live">
+                <i class="bi bi-arrow-up-right" aria-hidden="true"></i>
               </a>
             </div>
           </div>
-        </div>
+        </article>
       </div>
 
     </div>
@@ -103,6 +85,32 @@ onMounted(() => {
 .projects-section {
   padding: 120px 0;
   background: transparent;
+}
+
+/* ─── HEADER ─── */
+.editorial-title {
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.view-all-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+  transition: color 0.3s ease;
+}
+
+.view-all-link:hover {
+  color: var(--accent);
 }
 
 /* ─── GRID LAYOUT ─── */
@@ -179,6 +187,14 @@ onMounted(() => {
   object-fit: cover;
   object-position: top center;
   transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Logo-style images are shown whole on a light plate instead of being cropped */
+.project-img-wrapper img.img-contain {
+  object-fit: contain;
+  object-position: center;
+  background: #fff;
+  padding: 24px;
 }
 
 .img-overlay {

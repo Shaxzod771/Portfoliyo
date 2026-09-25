@@ -2,14 +2,20 @@
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useSettingsStore } from "../stores/settings";
 import { translations } from "../constants/translations";
+import { SOCIALS } from "../constants/site";
+import { useReveal } from "../composables/useReveal";
 
 const settings = useSettingsStore();
 const baseUrl = import.meta.env.BASE_URL;
+const root = ref(null);
+useReveal(root);
 
 const t = computed(() => translations[settings.lang]?.home || {});
+const heroSocials = SOCIALS.slice(0, 3);
 
-// Mouse parallax effect for hero abstract shape
-const parallaxStyle = ref({});
+// Mouse parallax effect for the hero image.
+// The transform is written straight to the element so Vue doesn't re-render 60 times a second.
+const visual = ref(null);
 let rafId = null;
 let targetX = 0;
 let targetY = 0;
@@ -28,26 +34,18 @@ const animateParallax = () => {
   currentX += (targetX - currentX) * 0.05;
   currentY += (targetY - currentY) * 0.05;
 
-  parallaxStyle.value = {
-    transform: `translate3d(${currentX}px, ${currentY}px, 0) rotate(${currentX * 0.5}deg)`
-  };
+  if (visual.value) {
+    visual.value.style.transform =
+      `translate3d(${currentX}px, ${currentY}px, 0) rotate(${currentX * 0.5}deg)`;
+  }
 
   rafId = requestAnimationFrame(animateParallax);
 };
 
 onMounted(() => {
-  // Intersection Observer for fade-in animations
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('in-view');
-      }
-    });
-  }, { threshold: 0.1 });
-
-  document.querySelectorAll('.animate-up, .animate-fade').forEach(el => observer.observe(el));
-
-  if (!('ontouchstart' in window)) {
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const hasFinePointer = window.matchMedia('(pointer: fine)').matches;
+  if (hasFinePointer && !reduceMotion) {
     window.addEventListener('mousemove', onMouseMove);
     animateParallax();
   }
@@ -60,11 +58,11 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="hero-section">
+  <div class="hero-section" ref="root">
     <div class="container hero-container">
 
       <!-- ABSTRACT VISUAL (Desktop) -->
-      <div class="hero-visual d-none d-lg-block" :style="parallaxStyle">
+      <div class="hero-visual d-none d-lg-block" ref="visual">
         <div class="hero-image-wrapper">
           <img :src="`${baseUrl}image/ozim-uchun.jpg`" alt="Shaxzod Isomiddinov" class="hero-image" />
         </div>
@@ -95,10 +93,10 @@ onUnmounted(() => {
             {{ t.hero_btn }} <i class="bi bi-arrow-down-right ms-2"></i>
           </a>
           <div class="hero-socials">
-            <a href="https://github.com/Shaxzod-hp" v-magnetic="15"><i class="bi bi-github"></i></a>
-            <a href="https://www.linkedin.com/in/shaxzod-isomiddinov-52922b366/" v-magnetic="15"><i
-                class="bi bi-linkedin"></i></a>
-            <a href="https://t.me/Shaxzod_Isomiddinov" v-magnetic="15"><i class="bi bi-telegram"></i></a>
+            <a v-for="social in heroSocials" :key="social.name" :href="social.url" target="_blank"
+              rel="noopener noreferrer" :aria-label="social.name" v-magnetic="15">
+              <i class="bi" :class="social.icon" aria-hidden="true"></i>
+            </a>
           </div>
         </div>
       </div>
@@ -257,26 +255,6 @@ onUnmounted(() => {
   mix-blend-mode: normal;
   filter: drop-shadow(0 20px 50px rgba(0, 0, 0, 0.4));
   transition: transform 0.3s ease;
-}
-
-@keyframes spinSlow {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes spinSlowReverse {
-  from {
-    transform: rotate(360deg);
-  }
-
-  to {
-    transform: rotate(0deg);
-  }
 }
 
 /* ─── ANIMATIONS ─── */

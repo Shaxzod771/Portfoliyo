@@ -1,33 +1,25 @@
 <script setup>
-import { computed, ref, onMounted } from "vue";
+import { computed, ref } from "vue";
 import { useSettingsStore } from "../stores/settings";
 import { translations } from "../constants/translations";
+import { PROJECTS } from "../constants/projects";
+import { useReveal } from "../composables/useReveal";
 
 const settings = useSettingsStore();
 const t = computed(() => translations[settings.lang]?.about || {});
 const baseUrl = import.meta.env.BASE_URL;
-
-onMounted(() => {
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('in-view');
-      }
-    });
-  }, { threshold: 0.1 });
-
-  document.querySelectorAll('.animate-up, .stat-line').forEach(el => observer.observe(el));
-});
+const root = ref(null);
+useReveal(root, ".animate-up, .stat-line");
 
 const stats = computed(() => [
   { label: t.value.stats_exp, value: '1+' },
-  { label: t.value.stats_proj, value: '3+' },
+  { label: t.value.stats_proj, value: `${PROJECTS.length}+` },
   { label: t.value.stats_client, value: '100%' }
 ]);
 </script>
 
 <template>
-  <div class="about-section">
+  <div class="about-section" ref="root">
     <div class="container">
 
       <!-- EDITORIAL HEADER -->
@@ -46,7 +38,8 @@ const stats = computed(() => [
         <!-- LEFT: IMAGE & METADATA -->
         <div class="col-lg-4 animate-up" style="--delay: 0.2s">
           <div class="about-image-wrapper mb-5">
-            <img :src="`${baseUrl}image/ozim-uchun1.jpg`" alt="Shaxzod Isomiddinov" class="profile-img" />
+            <img :src="`${baseUrl}image/ozim-uchun1.jpg`" alt="Shaxzod Isomiddinov" class="profile-img"
+              loading="lazy" />
           </div>
 
           <div class="metadata-block">
@@ -56,7 +49,7 @@ const stats = computed(() => [
             </div>
             <div class="meta-item">
               <span class="meta-label">{{ t.meta_location }}</span>
-              <span class="meta-value">{{ t.uzbekistan }}</span>
+              <span class="meta-value">{{ t.location_val }}</span>
             </div>
             <div class="meta-item">
               <span class="meta-label">{{ t.meta_focus }}</span>

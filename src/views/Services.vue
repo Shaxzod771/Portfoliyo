@@ -1,51 +1,36 @@
 <script setup>
-import { computed, onMounted, ref } from "vue";
+import { computed, ref } from "vue";
 import { useSettingsStore } from "../stores/settings";
 import { translations } from "../constants/translations";
+import { useReveal } from "../composables/useReveal";
 
 const settings = useSettingsStore();
-const t = computed(() => translations[settings.lang]?.services || { items: [], skills: [] });
+const t = computed(() => translations[settings.lang]?.services || { skills: [] });
+const skills = computed(() => t.value.skills || []);
 
-const skills = computed(() => t.value.skills || [
-  { name: 'PHP', desc: 'Server-side Development', link: 'https://www.php.net' },
-  { name: 'LARAVEL', desc: 'Backend Architecture', link: 'https://laravel.com' },
-  { name: 'VUE.JS', desc: 'Interactive Interfaces', link: 'https://vuejs.org' },
-  { name: 'JAVASCRIPT', desc: 'Frontend Logic', link: 'https://developer.mozilla.org/docs/Web/JavaScript' },
-  { name: 'HTML & CSS', desc: 'Semantic Structure & Style', link: 'https://developer.mozilla.org/docs/Web' },
-  { name: 'MYSQL', desc: 'Database Design', link: 'https://www.mysql.com' }
-]);
+const marqueeWords = ["PHP", "LARAVEL", "VUE.JS", "JAVASCRIPT", "MYSQL", "REST API", "UI/UX", "DEVELOPMENT"];
 
 const hoveredIndex = ref(null);
-
-onMounted(() => {
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('in-view');
-      }
-    });
-  }, { threshold: 0.1 });
-
-  document.querySelectorAll('.animate-up').forEach(el => observer.observe(el));
-});
+const root = ref(null);
+useReveal(root);
 </script>
 
 <template>
-  <div class="skills-section">
+  <div class="skills-section" ref="root">
 
     <div class="container pb-5">
       <!-- TITLE -->
       <div class="section-header animate-up mb-5">
-        <p class="section-title mb-2">{{ t.title || 'CORE CAPABILITIES' }}</p>
-        <h2 class="section-heading m-0">{{ t.subtitle || 'Technologies' }}</h2>
+        <p class="section-title mb-2">{{ t.title }}</p>
+        <h2 class="section-heading m-0">{{ t.subtitle }}</h2>
       </div>
 
       <!-- INTERACTIVE LIST -->
       <div class="skills-list-container animate-up" style="--delay: 0.2s">
         <a
           v-for="(skill, i) in skills"
-          :key="i"
-          :href="skill.link || '#'"
+          :key="skill.name"
+          :href="skill.link"
           target="_blank"
           rel="noopener noreferrer"
           class="skill-row"
@@ -56,50 +41,21 @@ onMounted(() => {
           <div class="skill-row-inner">
             <h3 class="skill-name">{{ skill.name }}</h3>
             <span class="skill-desc">{{ skill.desc }}</span>
-            <i class="bi bi-arrow-up-right skill-arrow"></i>
+            <i class="bi bi-arrow-up-right skill-arrow" aria-hidden="true"></i>
           </div>
         </a>
       </div>
     </div>
 
     <!-- MARQUEE -->
+    <!-- Decorative: the two identical copies make the loop seamless; the second is hidden from screen readers -->
     <div class="marquee-wrapper mt-5 pt-5">
       <div class="marquee">
-        <div class="marquee-content">
-          <span>PHP</span>
-          <span class="separator">—</span>
-          <span>LARAVEL</span>
-          <span class="separator">—</span>
-          <span>VUE.JS</span>
-          <span class="separator">—</span>
-          <span>JAVASCRIPT</span>
-          <span class="separator">—</span>
-          <span>MYSQL</span>
-          <span class="separator">—</span>
-          <span>API</span>
-          <span class="separator">—</span>
-          <span>UI/UX</span>
-          <span class="separator">—</span>
-          <span>DEVELOPMENT</span>
-          <span class="separator">—</span>
-        </div>
-        <div class="marquee-content" aria-hidden="true">
-          <a href="https://www.php.net/"><span>PHP</span></a>
-          <span class="separator">—</span>
-          <a href="https://laravel.com/"><span>LARAVEL</span></a>
-          <span class="separator">—</span>
-          <a href="https://vuejs.org/"><span>VUE.JS</span></a>
-          <span class="separator">—</span>
-          <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript"><span>JAVASCRIPT</span></a>
-          <span class="separator">—</span>
-          <a href="https://www.mysql.com/"><span>MYSQL</span></a>
-          <span class="separator">—</span>
-          <a href="https://developer.mozilla.org/en-US/docs/Web/API"><span>API</span></a>
-          <span class="separator">—</span>
-          <a href="https://developer.mozilla.org/en-US/docs/Web/CSS"><span>UI/UX</span></a>
-          <span class="separator">—</span>
-          <a href="https://developer.mozilla.org/en-US/docs/Web/CSS"><span>DEVELOPMENT</span></a>
-          <span class="separator">—</span>
+        <div v-for="copy in 2" :key="copy" class="marquee-content" :aria-hidden="copy === 2 ? 'true' : null">
+          <template v-for="word in marqueeWords" :key="word">
+            <span>{{ word }}</span>
+            <span class="separator" aria-hidden="true">—</span>
+          </template>
         </div>
       </div>
     </div>
@@ -194,8 +150,6 @@ onMounted(() => {
   border-bottom: 1px solid var(--border-color);
   padding: 24px 0;
   background: rgba(255, 255, 255, 0.02);
-  width: 100vw;
-  margin-left: calc(-50vw + 50%);
   overflow: hidden;
 }
 
@@ -210,6 +164,7 @@ onMounted(() => {
 
 .marquee-content {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   animation: scrollMarquee 20s linear infinite;
 }

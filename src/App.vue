@@ -1,5 +1,6 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, watch, onMounted, onUnmounted } from "vue";
+import { useSettingsStore } from "./stores/settings";
 import Navbar from "./components/Global/Navbar.vue";
 import Home from "./views/Home.vue";
 import About from "./views/About.vue";
@@ -9,16 +10,25 @@ import Project from "./views/Project.vue";
 import Footer from "./components/Global/Footer.vue";
 import CustomCursor from "./components/Global/CustomCursor.vue";
 
-const scrollProgress = ref(0);
+const settings = useSettingsStore();
+
+// Keep <html lang> in sync so screen readers and search engines see the active language
+watch(() => settings.lang, (lang) => {
+  document.documentElement.lang = lang;
+}, { immediate: true });
+
+const scrollProgress = ref("0%");
 
 const handleScroll = () => {
   const totalScroll = document.documentElement.scrollTop;
   const windowHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-  scrollProgress.value = `${(totalScroll / windowHeight) * 100}%`;
+  const percent = windowHeight > 0 ? (totalScroll / windowHeight) * 100 : 0;
+  scrollProgress.value = `${percent}%`;
 };
 
 onMounted(() => {
-  window.addEventListener("scroll", handleScroll);
+  window.addEventListener("scroll", handleScroll, { passive: true });
+  handleScroll();
 });
 
 onUnmounted(() => {
@@ -29,7 +39,7 @@ onUnmounted(() => {
 <template>
   <CustomCursor />
   
-  <div class="scroll-progress-container">
+  <div class="scroll-progress-container" aria-hidden="true">
     <div class="scroll-progress-bar" :style="{ width: scrollProgress }"></div>
   </div>
 
@@ -116,6 +126,28 @@ a, button {
   color: inherit;
   text-decoration: none;
   cursor: pointer; /* fallback for touch devices */
+}
+
+/* Visible keyboard focus */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* Respect users who ask the OS for less motion */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* ─── CINEMATIC BACKGROUND EFFECTS ─── */

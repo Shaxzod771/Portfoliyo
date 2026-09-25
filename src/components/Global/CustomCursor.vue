@@ -3,10 +3,12 @@ import { ref, onMounted, onUnmounted } from 'vue';
 
 const cursor = ref(null);
 const cursorDot = ref(null);
-const cursorText = ref('');
 const isHovering = ref(false);
 const isProjectHover = ref(false);
-const isTouchDevice = ref(false);
+// Only desktop pointers get the custom cursor; decided on mount so touch devices render nothing
+const isEnabled = ref(false);
+
+const INTERACTIVE = 'a, button, input, textarea, .magnetic, .interactive';
 
 let mouseX = 0;
 let mouseY = 0;
@@ -21,8 +23,8 @@ const animate = () => {
   // Smooth follow for the outer circle
   cursorX += (mouseX - cursorX) * 0.15;
   cursorY += (mouseY - cursorY) * 0.15;
-  
-  // Instant follow for the dot
+
+  // Near-instant follow for the dot
   dotX += (mouseX - dotX) * 0.4;
   dotY += (mouseY - dotY) * 0.4;
 
@@ -41,71 +43,52 @@ const onMouseMove = (e) => {
   mouseY = e.clientY;
 };
 
-const setupHoverListeners = () => {
-  // Select interactive elements
-  const links = document.querySelectorAll('a, button, .magnetic, .interactive');
-  
-  links.forEach(link => {
-    link.addEventListener('mouseenter', () => {
-      isHovering.value = true;
-    });
-    link.addEventListener('mouseleave', () => {
-      isHovering.value = false;
-    });
-  });
+// One delegated listener instead of attaching handlers to every link:
+// works for elements added later (e.g. after a language switch) and never piles up duplicates.
+const onMouseOver = (e) => {
+  const target = e.target instanceof Element ? e.target : null;
+  isProjectHover.value = Boolean(target?.closest('.project-card'));
+  isHovering.value = Boolean(target?.closest(INTERACTIVE));
+};
 
-  // Select project cards
-  const projects = document.querySelectorAll('.project-card');
-  projects.forEach(project => {
-    project.addEventListener('mouseenter', () => {
-      isProjectHover.value = true;
-      cursorText.value = 'VIEW';
-    });
-    project.addEventListener('mouseleave', () => {
-      isProjectHover.value = false;
-      cursorText.value = '';
-    });
-  });
+const onMouseLeaveWindow = () => {
+  isHovering.value = false;
+  isProjectHover.value = false;
 };
 
 onMounted(() => {
-  // Detect touch devices
-  isTouchDevice.value = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-  
-  if (!isTouchDevice.value) {
-    window.addEventListener('mousemove', onMouseMove);
-    requestRef = requestAnimationFrame(animate);
-    
-    // Set up initial listeners and observe DOM for new elements
-    setTimeout(setupHoverListeners, 500);
-    
-    const observer = new MutationObserver((mutations) => {
-      setupHoverListeners();
-    });
-    observer.observe(document.body, { childList: true, subtree: true });
-  }
+  isEnabled.value =
+    window.matchMedia('(pointer: fine)').matches &&
+    !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!isEnabled.value) return;
+
+  window.addEventListener('mousemove', onMouseMove, { passive: true });
+  document.addEventListener('mouseover', onMouseOver, { passive: true });
+  document.documentElement.addEventListener('mouseleave', onMouseLeaveWindow);
+  requestRef = requestAnimationFrame(animate);
 });
 
 onUnmounted(() => {
-  if (!isTouchDevice.value) {
-    window.removeEventListener('mousemove', onMouseMove);
-    cancelAnimationFrame(requestRef);
-  }
+  if (!isEnabled.value) return;
+  window.removeEventListener('mousemove', onMouseMove);
+  document.removeEventListener('mouseover', onMouseOver);
+  document.documentElement.removeEventListener('mouseleave', onMouseLeaveWindow);
+  cancelAnimationFrame(requestRef);
 });
 </script>
 
 <template>
-  <div v-if="!isTouchDevice" class="cursor-wrapper">
+  <div v-if="isEnabled" class="cursor-wrapper" aria-hidden="true">
     <div ref="cursorDot" class="cursor-dot" :class="{ 'hidden': isProjectHover }"></div>
-    <div 
-      ref="cursor" 
-      class="cursor-ring" 
-      :class="{ 
-        'hovering': isHovering && !isProjectHover, 
-        'project-hover': isProjectHover 
+    <div
+      ref="cursor"
+      class="cursor-ring"
+      :class="{
+        'hovering': isHovering && !isProjectHover,
+        'project-hover': isProjectHover
       }"
     >
-      <span v-if="isProjectHover" class="cursor-text">{{ cursorText }}</span>
+      <span v-if="isProjectHover" class="cursor-text">VIEW</span>
     </div>
   </div>
 </template>
@@ -130,7 +113,7 @@ onUnmounted(() => {
   background-color: var(--text-color, #fff);
   border-radius: 50%;
   pointer-events: none;
-  transition: opacity 0.2s, transform 0.1s;
+  transition: opacity 0.2s;
 }
 
 .cursor-ring {

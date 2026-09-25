@@ -1,7 +1,13 @@
 export default {
   mounted(el, binding) {
-    el.style.display = 'inline-block';
-    
+    // Magnetic hover only makes sense with a mouse
+    if (!window.matchMedia('(pointer: fine)').matches) return;
+
+    // Transforms don't apply to plain inline elements; leave flex/block layouts untouched
+    if (getComputedStyle(el).display === 'inline') {
+      el.style.display = 'inline-block';
+    }
+
     const strength = binding.value || 30; // Maximum distance to move
     
     let boundingClientRect = null;

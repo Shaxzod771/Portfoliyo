@@ -1,22 +1,45 @@
 <script setup>
 import { useSettingsStore } from "../../stores/settings";
 import { translations } from "../../constants/translations";
+import { SOCIALS } from "../../constants/site";
 import { computed, ref, onMounted, onUnmounted } from "vue";
 
 const settings = useSettingsStore();
 const t = computed(() => translations[settings.lang]?.nav || {});
+const languages = ["uz", "en", "ru"];
+const menuSocials = SOCIALS.slice(0, 3);
 
 const activeSection = ref("home");
 const isMenuOpen = ref(false);
 const isScrolled = ref(false);
+const isLangOpen = ref(false);
+const langDropdown = ref(null);
 
-const navLinks = computed(() => [
-  { href: '#home', label: t.value.home || 'Home', id: 'home', num: '01' },
-  { href: '#about', label: t.value.about || 'About', id: 'about', num: '02' },
-  { href: '#services', label: t.value.services || 'Skills', id: 'services', num: '03' },
-  { href: '#project', label: t.value.project || 'Work', id: 'project', num: '04' },
-  { href: '#contact', label: t.value.contact || 'Contact', id: 'contact', num: '05' },
-]);
+const navLinks = computed(() =>
+  ["home", "about", "services", "project", "contact"].map((id, i) => ({
+    id,
+    href: `#${id}`,
+    label: t.value[id],
+    num: String(i + 1).padStart(2, "0"),
+  }))
+);
+
+function chooseLanguage(lang) {
+  settings.setLanguage(lang);
+  isLangOpen.value = false;
+}
+
+function onDocumentClick(e) {
+  if (isLangOpen.value && langDropdown.value && !langDropdown.value.contains(e.target)) {
+    isLangOpen.value = false;
+  }
+}
+
+function onKeydown(e) {
+  if (e.key !== "Escape") return;
+  isLangOpen.value = false;
+  if (isMenuOpen.value) closeMenu();
+}
 
 function onScroll() {
   isScrolled.value = window.scrollY > 50;
@@ -46,22 +69,34 @@ function closeMenu() {
   document.body.style.overflow = '';
 }
 
-onMounted(() => window.addEventListener("scroll", onScroll));
-onUnmounted(() => window.removeEventListener("scroll", onScroll));
+onMounted(() => {
+  window.addEventListener("scroll", onScroll, { passive: true });
+  document.addEventListener("click", onDocumentClick);
+  document.addEventListener("keydown", onKeydown);
+  onScroll();
+});
+
+onUnmounted(() => {
+  window.removeEventListener("scroll", onScroll);
+  document.removeEventListener("click", onDocumentClick);
+  document.removeEventListener("keydown", onKeydown);
+  document.body.style.overflow = "";
+});
 </script>
 
 <template>
   <nav class="premium-nav" :class="{ 'scrolled': isScrolled }">
     <div class="nav-container">
       <!-- BRAND -->
-      <a href="#home" class="brand" v-magnetic="20">
-        <span class="brand-text">&lt;SHAXZOD<span style="color: var(--accent)">.DEV</span>/&gt;</span>
+      <a href="#home" class="brand" aria-label="Shaxzod Isomiddinov" v-magnetic="20">
+        <span class="brand-text">&lt;SHAXZOD<span class="text-accent">.DEV</span>/&gt;</span>
       </a>
 
       <!-- DESKTOP LINKS -->
       <div class="desktop-links d-none d-lg-flex">
         <a v-for="link in navLinks" :key="link.id" :href="link.href" class="nav-link-item"
-          :class="{ 'active': activeSection === link.id }" v-magnetic="15">
+          :class="{ 'active': activeSection === link.id }"
+          :aria-current="activeSection === link.id ? 'true' : null" v-magnetic="15">
           {{ link.label }}
         </a>
       </div>
@@ -69,24 +104,26 @@ onUnmounted(() => window.removeEventListener("scroll", onScroll));
       <!-- RIGHT ACTIONS -->
       <div class="nav-actions d-none d-lg-flex">
         <!-- Language Dropdown -->
-        <div class="dropdown">
-          <button class="lang-btn" type="button" data-bs-toggle="dropdown" v-magnetic="15">
-            {{ settings.lang.toUpperCase() }}
+        <div class="lang-dropdown" ref="langDropdown">
+          <button class="lang-btn" type="button" :aria-label="t.language" aria-haspopup="true"
+            :aria-expanded="isLangOpen ? 'true' : 'false'" @click="isLangOpen = !isLangOpen" v-magnetic="15">
+            {{ settings.lang.toUpperCase() }} <i class="bi bi-chevron-down" aria-hidden="true"></i>
           </button>
-          <ul class="dropdown-menu dropdown-menu-end glass-dropdown">
-            <li><button class="dropdown-item" @click="settings.setLanguage('en')">EN</button></li>
-            <li><button class="dropdown-item" @click="settings.setLanguage('uz')">UZ</button></li>
-            <li><button class="dropdown-item" @click="settings.setLanguage('ru')">RU</button></li>
+          <ul class="glass-dropdown" v-show="isLangOpen">
+            <li v-for="lang in languages" :key="lang">
+              <button type="button" class="dropdown-item" :class="{ active: settings.lang === lang }"
+                @click="chooseLanguage(lang)">{{ lang.toUpperCase() }}</button>
+            </li>
           </ul>
         </div>
 
-        <a href="#contact" class="nav-cta" v-magnetic="20">{{ t.contact || "LET'S TALK" }} <i
-            class="bi bi-arrow-right"></i></a>
+        <a href="#contact" class="nav-cta" v-magnetic="20">{{ t.cta }} <i class="bi bi-arrow-right"
+            aria-hidden="true"></i></a>
       </div>
 
       <!-- MOBILE TOGGLE -->
-      <button class="menu-toggle d-lg-none" @click="toggleMenu" :class="{ 'open': isMenuOpen }"
-        aria-label="Toggle Menu">
+      <button type="button" class="menu-toggle d-lg-none" @click="toggleMenu" :class="{ 'open': isMenuOpen }"
+        :aria-label="t.menu" :aria-expanded="isMenuOpen ? 'true' : 'false'" aria-controls="mobile-menu">
         <span></span>
         <span></span>
       </button>
@@ -94,7 +131,7 @@ onUnmounted(() => window.removeEventListener("scroll", onScroll));
   </nav>
 
   <!-- MOBILE OVERLAY MENU -->
-  <div class="mobile-overlay" :class="{ 'active': isMenuOpen }">
+  <div id="mobile-menu" class="mobile-overlay" :class="{ 'active': isMenuOpen }" :inert="!isMenuOpen">
     <div class="overlay-bg"></div>
     <div class="overlay-content">
       <div class="overlay-links">
@@ -107,17 +144,15 @@ onUnmounted(() => window.removeEventListener("scroll", onScroll));
 
       <div class="overlay-footer" :style="{ 'transition-delay': isMenuOpen ? '0.7s' : '0s' }">
         <div class="lang-switcher">
-          <button @click="settings.setLanguage('en'); closeMenu()"
-            :class="{ active: settings.lang === 'en' }">EN</button>
-          <button @click="settings.setLanguage('uz'); closeMenu()"
-            :class="{ active: settings.lang === 'uz' }">UZ</button>
-          <button @click="settings.setLanguage('ru'); closeMenu()"
-            :class="{ active: settings.lang === 'ru' }">RU</button>
+          <button v-for="lang in languages" :key="lang" type="button"
+            @click="settings.setLanguage(lang); closeMenu()"
+            :class="{ active: settings.lang === lang }">{{ lang.toUpperCase() }}</button>
         </div>
         <div class="overlay-socials">
-          <a href="https://github.com/Shaxzod-hp"><i class="bi bi-github"></i></a>
-          <a href="https://www.linkedin.com/in/shaxzod-isomiddinov-52922b366/"><i class="bi bi-linkedin"></i></a>
-          <a href="https://t.me/Shaxzod_Isomiddinov"><i class="bi bi-telegram"></i></a>
+          <a v-for="social in menuSocials" :key="social.name" :href="social.url" target="_blank"
+            rel="noopener noreferrer" :aria-label="social.name">
+            <i class="bi" :class="social.icon" aria-hidden="true"></i>
+          </a>
         </div>
       </div>
     </div>
@@ -233,22 +268,46 @@ onUnmounted(() => window.removeEventListener("scroll", onScroll));
   color: var(--text-color);
 }
 
+.lang-btn i {
+  font-size: 0.65rem;
+  margin-left: 4px;
+}
+
+.lang-dropdown {
+  position: relative;
+}
+
 .glass-dropdown {
-  background: rgba(10, 11, 18, 0.9);
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  list-style: none;
+  margin: 0;
+  background: rgba(10, 11, 18, 0.95);
   backdrop-filter: blur(12px);
   border: 1px solid var(--border-color);
   border-radius: 12px;
   min-width: 80px;
   padding: 8px;
+  z-index: 10;
 }
 
 .glass-dropdown .dropdown-item {
+  display: block;
+  width: 100%;
+  background: transparent;
+  border: none;
+  text-align: left;
   color: var(--text-muted);
   font-size: 0.8rem;
   font-weight: 600;
   border-radius: 6px;
   padding: 8px 16px;
   transition: all 0.2s;
+}
+
+.glass-dropdown .dropdown-item.active {
+  color: var(--text-color);
 }
 
 .glass-dropdown .dropdown-item:hover {

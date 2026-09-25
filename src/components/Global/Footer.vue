@@ -12,61 +12,46 @@
             <span class="brand-bracket">&lt;</span>Shaxzod<span class="brand-dot">.dev</span><span
               class="brand-bracket">/&gt;</span>
           </a>
-          <p class="footer-desc mt-3">
-            Frontend developer crafting modern, responsive, and user-friendly web experiences with Vue.js and clean
-            code.
-          </p>
+          <p class="footer-desc mt-3">{{ t.footer.desc }}</p>
           <div class="footer-socials mt-3">
-            <a href="https://www.linkedin.com/in/shaxzod-isomiddinov-52922b366/" target="_blank" class="footer-social"
-              title="LinkedIn"><i class="bi bi-linkedin"></i></a>
-            <a href="https://t.me/Shaxzod_Isomiddinov" target="_blank" class="footer-social" title="Telegram"><i
-                class="bi bi-telegram"></i></a>
-            <a href="https://github.com/Shaxzod-hp" target="_blank" class="footer-social" title="GitHub"><i
-                class="bi bi-github"></i></a>
-            <a href="https://www.instagram.com/isomiddinov__sh" target="_blank" class="footer-social"
-              title="Instagram"><i class="bi bi-instagram"></i></a>
+            <a v-for="social in SOCIALS" :key="social.name" :href="social.url" target="_blank"
+              rel="noopener noreferrer" class="footer-social" :title="social.name" :aria-label="social.name">
+              <i class="bi" :class="social.icon" aria-hidden="true"></i>
+            </a>
           </div>
         </div>
 
         <!-- QUICK LINKS -->
         <div class="col-lg-2 col-md-6 col-6">
-          <h6 class="footer-heading">Links</h6>
+          <h2 class="footer-heading">{{ t.footer.links }}</h2>
           <ul class="footer-links">
-            <li><a href="#home">Home</a></li>
-            <li><a href="#about">About</a></li>
-            <li><a href="#services">Services</a></li>
-            <li><a href="#project">Projects</a></li>
-            <li><a href="#contact">Contact</a></li>
+            <li v-for="link in navLinks" :key="link.id"><a :href="`#${link.id}`">{{ link.label }}</a></li>
           </ul>
         </div>
 
         <!-- SERVICES -->
         <div class="col-lg-3 col-md-6 col-6">
-          <h6 class="footer-heading">Services</h6>
+          <h2 class="footer-heading">{{ t.footer.services }}</h2>
           <ul class="footer-links">
-            <li><a href="#services">Frontend Dev</a></li>
-            <li><a href="#services">Responsive Design</a></li>
-            <li><a href="#services">Vue.js Apps</a></li>
-            <li><a href="#services">API Integration</a></li>
-            <li><a href="#services">UI Implementation</a></li>
+            <li v-for="item in t.services.items" :key="item"><a href="#services">{{ item }}</a></li>
           </ul>
         </div>
 
         <!-- CONTACT -->
         <div class="col-lg-3 col-md-6">
-          <h6 class="footer-heading">Contact</h6>
+          <h2 class="footer-heading">{{ t.footer.contact }}</h2>
           <ul class="footer-contact-list">
             <li>
-              <i class="bi bi-envelope"></i>
-              <a href="mailto:isomiddinovshaxzod007@gmail.com">isomiddinovshaxzod007@gmail.com</a>
+              <i class="bi bi-envelope" aria-hidden="true"></i>
+              <a :href="`mailto:${CONTACT.email}`">{{ CONTACT.email }}</a>
             </li>
             <li>
-              <i class="bi bi-telephone"></i>
-              <a href="tel:+998940073989">+998 94 007 39 89</a>
+              <i class="bi bi-telephone" aria-hidden="true"></i>
+              <a :href="`tel:${CONTACT.phone}`">{{ CONTACT.phoneDisplay }}</a>
             </li>
             <li>
-              <i class="bi bi-geo-alt"></i>
-              <span>Tashkent, Uzbekistan</span>
+              <i class="bi bi-geo-alt" aria-hidden="true"></i>
+              <span>{{ t.contact.location_val }}</span>
             </li>
           </ul>
         </div>
@@ -78,21 +63,34 @@
     <div class="footer-bottom">
       <div class="container d-flex flex-wrap justify-content-between align-items-center py-3 gap-2">
         <p class="mb-0 footer-copy">
-          &copy; 2025 <span class="accent">Shaxzod Isomiddinov</span>. All rights reserved.
+          &copy; {{ year }} <span class="accent">Shaxzod Isomiddinov</span>. {{ t.footer.rights }}
         </p>
         <p class="mb-0 footer-made">
-          Made with <span class="heart">♥</span> using Vue.js
+          {{ t.footer.made_with }} <span class="heart" aria-hidden="true">♥</span> {{ t.footer.using }}
         </p>
       </div>
     </div>
   </footer>
 </template>
 
-<script setup></script>
+<script setup>
+import { computed } from "vue";
+import { useSettingsStore } from "../../stores/settings";
+import { translations } from "../../constants/translations";
+import { CONTACT, SOCIALS } from "../../constants/site";
+
+const settings = useSettingsStore();
+const t = computed(() => translations[settings.lang] || translations.uz);
+const year = new Date().getFullYear();
+
+const navLinks = computed(() =>
+  ["home", "about", "services", "project", "contact"].map((id) => ({ id, label: t.value.nav[id] }))
+);
+</script>
 
 <style scoped>
 .footer-section {
-  background: var(--bg-secondary, #0c1033);
+  background: var(--bg-secondary);
   position: relative;
   z-index: 1;
 }
@@ -157,6 +155,7 @@
 
 /* ─── HEADINGS ─── */
 .footer-heading {
+  margin-top: 0;
   color: var(--text-color);
   font-size: 0.85rem;
   font-weight: 700;

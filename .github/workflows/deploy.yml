@@ -22,11 +22,17 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm install --legacy-peer-deps
+        run: npm ci
 
       - name: Build
         run: npm run build
+        env:
+          # Repository secrets (Settings → Secrets and variables → Actions)
+          VITE_TG_BOT_TOKEN: ${{ secrets.VITE_TG_BOT_TOKEN }}
+          VITE_TG_CHAT_ID: ${{ secrets.VITE_TG_CHAT_ID }}
 
+      # Publishes dist/ to the gh-pages branch.
+      # GitHub → Settings → Pages → Source must be "Deploy from a branch: gh-pages / (root)".
       - name: Deploy to gh-pages branch
         uses: peaceiris/actions-gh-pages@v4
         with:

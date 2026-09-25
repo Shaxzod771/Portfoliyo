@@ -1,38 +1,41 @@
-# Partfoliyo
+# Shaxzod Isomiddinov — Portfolio
 
-This template should help get you started developing with Vue 3 in Vite.
+Shaxsiy portfolio sayti: Vue 3 + Vite + Pinia. Uch tilda (UZ / EN / RU), kontakt formasi xabarlarni Telegram botga yuboradi.
 
-## Recommended IDE Setup
+Jonli sayt: https://shaxzod-hp.github.io/Partfoliyo/
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
-
-## Recommended Browser Setup
-
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
+## Ishga tushirish
 
 ```sh
 npm install
-```
-
-### Compile and Hot-Reload for Development
-
-```sh
+cp .env.example .env.local   # keyin bot token va chat id ni yozing
 npm run dev
 ```
 
-### Compile and Minify for Production
+Production build va uni lokal ko'rish:
 
 ```sh
 npm run build
+npm run preview
 ```
+
+## Kontakt formasi (Telegram)
+
+| O'zgaruvchi         | Nima                                             |
+| ------------------- | ------------------------------------------------ |
+| `VITE_TG_BOT_TOKEN` | @BotFather bergan bot tokeni                      |
+| `VITE_TG_CHAT_ID`   | Xabarlar keladigan chat (sizning Telegram id'ingiz) |
+
+Lokal ishlash uchun `.env.local` faylida, GitHub Actions uchun esa repository **Secrets** bo'limida saqlanadi.
+`.env.local` gitga tushmaydi.
+
+## Ma'lumotlarni o'zgartirish
+
+- Email, telefon, ijtimoiy tarmoqlar — `src/constants/site.js`
+- Loyihalar (rasm, GitHub va jonli havolalar) — `src/constants/projects.js`
+- Barcha matnlar va tarjimalar — `src/constants/translations.js`
+
+## Deploy
+
+`main` branchga push qilinganda GitHub Actions saytni build qiladi va `gh-pages` branchga joylaydi.
+GitHub → Settings → Pages → Source: **Deploy from a branch → `gh-pages` / (root)** bo'lishi kerak.

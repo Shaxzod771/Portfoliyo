@@ -1,43 +1,81 @@
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onUnmounted } from "vue";
 import { useSettingsStore } from "../stores/settings";
 import { translations } from "../constants/translations";
+import { CONTACT, SOCIALS } from "../constants/site";
+import { sendContactMessage } from "../services/telegram";
+import { useReveal } from "../composables/useReveal";
 
 const settings = useSettingsStore();
-const t = computed(() => translations[settings.lang].contact);
+const t = computed(() => translations[settings.lang]?.contact || translations.uz.contact);
+const contactSocials = SOCIALS.filter((s) => s.name !== "Instagram");
+const root = ref(null);
+useReveal(root);
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const COOLDOWN_MS = 30_000;
 
 const name = ref("");
 const email = ref("");
 const subject = ref("");
 const message = ref("");
-const sent = ref(false);
+const website = ref(""); // honeypot: real visitors never see or fill this field
 
-function sendMessage() {
-  if (!name.value || !email.value || !message.value) {
-    alert(t.value.error);
-    return;
-  }
-  console.log("Name:", name.value, "Email:", email.value, "Subject:", subject.value, "Message:", message.value);
-  sent.value = true;
-  setTimeout(() => { sent.value = false; }, 4000);
-  name.value = email.value = subject.value = message.value = "";
+// status: "idle" | "sending" | "sent" | "error"
+const status = ref("idle");
+const errorText = ref("");
+let lastSentAt = 0;
+let resetTimer = null;
+
+function showError(text) {
+  status.value = "error";
+  errorText.value = text;
 }
 
-onMounted(() => {
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('in-view');
-      }
+async function sendMessage() {
+  if (status.value === "sending") return;
+
+  if (!name.value.trim() || !email.value.trim() || !message.value.trim()) {
+    return showError(t.value.error);
+  }
+  if (!EMAIL_RE.test(email.value.trim())) {
+    return showError(t.value.error_email);
+  }
+
+  // Bots fill every field; pretend success so they move on
+  if (website.value || Date.now() - lastSentAt < COOLDOWN_MS) {
+    status.value = "sent";
+    return;
+  }
+
+  status.value = "sending";
+  errorText.value = "";
+  try {
+    await sendContactMessage({
+      name: name.value.trim(),
+      email: email.value.trim(),
+      subject: subject.value.trim(),
+      message: message.value.trim(),
+      lang: settings.lang,
     });
-  }, { threshold: 0.1 });
-  
-  document.querySelectorAll('.animate-up').forEach(el => observer.observe(el));
-});
+    lastSentAt = Date.now();
+    status.value = "sent";
+    name.value = email.value = subject.value = message.value = "";
+    clearTimeout(resetTimer);
+    resetTimer = setTimeout(() => {
+      if (status.value === "sent") status.value = "idle";
+    }, 6000);
+  } catch (err) {
+    console.error("Contact form:", err);
+    showError(t.value.error_send);
+  }
+}
+
+onUnmounted(() => clearTimeout(resetTimer));
 </script>
 
 <template>
-  <div class="contact-section">
+  <div class="contact-section" ref="root">
     <div class="container">
 
       <!-- EDITORIAL HEADER -->
@@ -53,39 +91,34 @@ onMounted(() => {
         <!-- ── CONTACT INFO ── -->
         <div class="col-lg-5 animate-up" style="--delay: 0.2s">
           <div class="info-block">
-            <h4 class="info-block-title">{{ t.get_in_touch }}</h4>
+            <h3 class="info-block-title">{{ t.get_in_touch }}</h3>
             <p class="info-block-desc">
               {{ t.desc }}
             </p>
 
             <div class="info-items mt-5">
               <div class="info-item">
-                <span class="info-label">{{ t.email || 'EMAIL' }}</span>
-                <a href="mailto:isomiddinovshaxzod007@gmail.com" class="info-value hover-underline">isomiddinovshaxzod007@gmail.com</a>
+                <span class="info-label">{{ t.email }}</span>
+                <a :href="`mailto:${CONTACT.email}`" class="info-value hover-underline">{{ CONTACT.email }}</a>
               </div>
               <div class="info-item mt-4">
-                <span class="info-label">{{ t.phone || 'PHONE' }}</span>
-                <a href="tel:+998940073989" class="info-value hover-underline">+998 94 007 39 89</a>
+                <span class="info-label">{{ t.phone }}</span>
+                <a :href="`tel:${CONTACT.phone}`" class="info-value hover-underline">{{ CONTACT.phoneDisplay }}</a>
               </div>
               <div class="info-item mt-4">
-                <span class="info-label">{{ t.location || 'LOCATION' }}</span>
-                <span class="info-value">Tashkent, Uzbekistan</span>
+                <span class="info-label">{{ t.location }}</span>
+                <span class="info-value">{{ t.location_val }}</span>
               </div>
             </div>
 
             <!-- SOCIALS -->
             <div class="social-row mt-5">
-              <a href="https://www.linkedin.com/in/shaxzod-isomiddinov-52922b366/" class="social-link" target="_blank" v-magnetic="10">
-                LinkedIn
-              </a>
-              <span class="separator">/</span>
-              <a href="https://t.me/Shaxzod_Isomiddinov" class="social-link" target="_blank" v-magnetic="10">
-                Telegram
-              </a>
-              <span class="separator">/</span>
-              <a href="https://github.com/Shaxzod-hp" class="social-link" target="_blank" v-magnetic="10">
-                GitHub
-              </a>
+              <template v-for="(social, i) in contactSocials" :key="social.name">
+                <span v-if="i > 0" class="separator" aria-hidden="true">/</span>
+                <a :href="social.url" class="social-link" target="_blank" rel="noopener noreferrer" v-magnetic="10">
+                  {{ social.name }}
+                </a>
+              </template>
             </div>
           </div>
         </div>
@@ -93,44 +126,64 @@ onMounted(() => {
         <!-- ── FORM ── -->
         <div class="col-lg-7 animate-up" style="--delay: 0.4s">
           <form class="minimal-form" @submit.prevent="sendMessage" novalidate>
-            <!-- Success banner -->
-            <div class="success-banner" v-if="sent">
-              <i class="bi bi-check-circle-fill"></i>
+            <!-- Status banners -->
+            <div class="form-banner success-banner" v-if="status === 'sent'" role="status">
+              <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
               {{ t.success }}
+            </div>
+            <div class="form-banner error-banner" v-if="status === 'error'" role="alert">
+              <i class="bi bi-exclamation-circle-fill" aria-hidden="true"></i>
+              {{ errorText }}
+            </div>
+
+            <!-- Honeypot field for spam bots — hidden from people and screen readers -->
+            <div class="hp-field" aria-hidden="true">
+              <label for="cf-website">Website</label>
+              <input id="cf-website" type="text" v-model="website" tabindex="-1" autocomplete="off" />
             </div>
 
             <div class="row g-4">
               <div class="col-md-6">
                 <div class="input-wrapper">
-                  <input type="text" class="minimal-input" v-model="name" placeholder=" " required />
-                  <label class="floating-label">{{ t.form.name }}</label>
+                  <input id="cf-name" name="name" type="text" class="minimal-input" v-model="name" placeholder=" "
+                    autocomplete="name" maxlength="100" required />
+                  <label for="cf-name" class="floating-label">{{ t.form.name }}</label>
                   <div class="input-line"></div>
                 </div>
               </div>
               <div class="col-md-6">
                 <div class="input-wrapper">
-                  <input type="email" class="minimal-input" v-model="email" placeholder=" " required />
-                  <label class="floating-label">{{ t.form.email }}</label>
+                  <input id="cf-email" name="email" type="email" class="minimal-input" v-model="email" placeholder=" "
+                    autocomplete="email" maxlength="150" required />
+                  <label for="cf-email" class="floating-label">{{ t.form.email }}</label>
                   <div class="input-line"></div>
                 </div>
               </div>
               <div class="col-12">
                 <div class="input-wrapper">
-                  <input type="text" class="minimal-input" v-model="subject" placeholder=" " />
-                  <label class="floating-label">{{ t.form.subject }}</label>
+                  <input id="cf-subject" name="subject" type="text" class="minimal-input" v-model="subject"
+                    placeholder=" " maxlength="150" />
+                  <label for="cf-subject" class="floating-label">{{ t.form.subject }}</label>
                   <div class="input-line"></div>
                 </div>
               </div>
               <div class="col-12">
                 <div class="input-wrapper">
-                  <textarea class="minimal-input" rows="4" v-model="message" placeholder=" " required></textarea>
-                  <label class="floating-label">{{ t.form.message }}</label>
+                  <textarea id="cf-message" name="message" class="minimal-input" rows="4" v-model="message"
+                    placeholder=" " maxlength="3000" required></textarea>
+                  <label for="cf-message" class="floating-label">{{ t.form.message }}</label>
                   <div class="input-line"></div>
                 </div>
               </div>
               <div class="col-12 mt-5">
-                <button type="submit" class="btn-primary-custom w-100 py-3" v-magnetic="5">
-                  {{ t.form.submit }} <i class="bi bi-arrow-right ms-2"></i>
+                <button type="submit" class="btn-primary-custom w-100 py-3" :disabled="status === 'sending'"
+                  v-magnetic="5">
+                  <template v-if="status === 'sending'">
+                    {{ t.form.sending }} <span class="spinner" aria-hidden="true"></span>
+                  </template>
+                  <template v-else>
+                    {{ t.form.submit }} <i class="bi bi-arrow-right ms-2" aria-hidden="true"></i>
+                  </template>
                 </button>
               </div>
             </div>
@@ -263,18 +316,56 @@ onMounted(() => {
   backdrop-filter: blur(10px);
 }
 
-.success-banner {
+.form-banner {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: rgba(0, 230, 118, 0.12);
-  border: 1px solid var(--accent);
   border-radius: 12px;
   padding: 16px;
-  color: var(--accent);
   font-size: 0.95rem;
   font-weight: 600;
   margin-bottom: 24px;
+}
+
+.success-banner {
+  background: var(--accent-dim);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+}
+
+.error-banner {
+  background: rgba(255, 77, 109, 0.1);
+  border: 1px solid #ff4d6d;
+  color: #ff8095;
+}
+
+.hp-field {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.btn-primary-custom:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  margin-left: 10px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ─── INPUTS ─── */
